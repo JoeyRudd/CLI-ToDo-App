@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/csv"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -13,14 +14,14 @@ type Task struct {
 	Completed   bool
 }
 
-// Helper function to close a file and log an error if it occurs
+// CloseFile Helper function to close a file and log an error if it occurs
 func CloseFile(file *os.File) {
 	if err := file.Close(); err != nil {
 		log.Printf("error closing file: %v", err)
 	}
 }
 
-// create a slice to hold tasks
+// Create a slice to hold tasks
 func (t Task) addTask(description string) Task {
 	return Task{
 		ID:          t.ID + 1, // Increment ID for simplicity
@@ -29,6 +30,7 @@ func (t Task) addTask(description string) Task {
 	}
 }
 
+// AppendTaskToCSV appends a new task to the CSV file
 func AppendTaskToCSV(task Task, filename string) error {
 	// Open the file for writing
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -55,6 +57,7 @@ func AppendTaskToCSV(task Task, filename string) error {
 	return nil
 }
 
+// ReadTasksFromCSV reads tasks from a CSV file and returns a slice of Task
 func ReadTasksFromCSV(filename string) ([]Task, error) {
 	// create a slice to hold tasks
 	var tasks []Task
@@ -69,7 +72,6 @@ func ReadTasksFromCSV(filename string) ([]Task, error) {
 
 	// Create a CSV reader
 	reader := csv.NewReader(file)
-
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, err
@@ -78,12 +80,12 @@ func ReadTasksFromCSV(filename string) ([]Task, error) {
 	for _, record := range records {
 		// Check if the record has the expected number of fields
 		if len(record) != 3 {
-			return nil, nil // or return an error if you prefer
+			return nil, fmt.Errorf("Malformed record at line %d: %v", len(tasks)+1, record)
 		}
 		// Convert the ID from string to int
 		id, err := strconv.Atoi(record[0])
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Invalid ID in record %v: %v", record, err)
 		}
 
 		// Convert the Completed status from string to bool
