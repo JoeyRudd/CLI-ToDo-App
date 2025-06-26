@@ -1,11 +1,10 @@
 package main
 
 import (
+	"Golang/CLI-ToDo-App/cmd"
 	"fmt"
-	"github.com/JoeyRudd/CLI-ToDo-App/internal"
-	"os"
 )
 
 func main() {
-
+	fmt.Println("Welcome to the CLI To-Do App!")
 }
