@@ -2,15 +2,22 @@ package internal
 
 import (
 	"encoding/csv"
+	"log"
 	"os"
 	"strconv"
 )
 
-// create a struct for a task
 type Task struct {
 	ID          int
 	Description string
 	Completed   bool
+}
+
+// Helper function to close a file and log an error if it occurs
+func CloseFile(file *os.File) {
+	if err := file.Close(); err != nil {
+		log.Printf("error closing file: %v", err)
+	}
 }
 
 // create a slice to hold tasks
@@ -28,7 +35,8 @@ func AppendTaskToCSV(task Task, filename string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	defer CloseFile(file)
 
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
@@ -56,7 +64,8 @@ func ReadTasksFromCSV(filename string) ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+
+	defer CloseFile(file)
 
 	// Create a CSV reader
 	reader := csv.NewReader(file)
@@ -94,4 +103,46 @@ func ReadTasksFromCSV(filename string) ([]Task, error) {
 	}
 
 	return tasks, nil
+}
+
+// UpdateTaskInCSV updates a task in the CSV file by ID
+func UpdateTaskInCSV(task Task, filename string) error {
+	// Read all tasks from the CSV file
+	tasks, err := ReadTasksFromCSV(filename)
+	if err != nil {
+		return err
+	}
+
+	// Find the task to update
+	for i, t := range tasks {
+		if t.ID == task.ID {
+			tasks[i].Completed = true // Update the task
+			break
+		}
+	}
+
+	// Open the file for writing (overwrite)
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+
+	defer CloseFile(file)
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write updated tasks back to the CSV file
+	for _, t := range tasks {
+		record := []string{
+			strconv.Itoa(t.ID),
+			t.Description,
+			strconv.FormatBool(t.Completed),
+		}
+		if err := writer.Write(record); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

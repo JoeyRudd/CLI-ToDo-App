@@ -50,4 +50,12 @@ func main() {
 		}
 	}
 
+	// testing updating a task in CSV
+	internal.UpdateTaskInCSV(task1, "tasks.csv")
+	tasks, err = internal.ReadTasksFromCSV("tasks.csv")
+	fmt.Printf("Testing code after updating task1:\n")
+	for _, task := range tasks {
+		fmt.Printf("%v\n", task)
+	}
+
 }
