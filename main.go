@@ -1,10 +1,11 @@
+/*
+Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+
+*/
 package main
 
-import (
-	"Golang/CLI-ToDo-App/cmd"
-	"fmt"
-)
+import "github.com/JoeyRudd/CLI-ToDo-App/cmd"
 
 func main() {
-	fmt.Println("Welcome to the CLI To-Do App!")
+	cmd.Execute()
 }
