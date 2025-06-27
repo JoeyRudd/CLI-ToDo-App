@@ -21,8 +21,8 @@ func CloseFile(file *os.File) {
 	}
 }
 
-// Create a slice to hold tasks
-func (t Task) addTask(description string) Task {
+// AddTask Create a slice to hold tasks
+func (t Task) AddTask(description string) Task {
 	return Task{
 		ID:          t.ID + 1, // Increment ID for simplicity
 		Description: description,
@@ -108,7 +108,7 @@ func ReadTasksFromCSV(filename string) ([]Task, error) {
 }
 
 // UpdateTaskInCSV updates a task in the CSV file by ID
-func UpdateTaskInCSV(task Task, filename string) error {
+func UpdateTaskInCSV(taskID int, filename string) error {
 	// Read all tasks from the CSV file
 	tasks, err := ReadTasksFromCSV(filename)
 	if err != nil {
@@ -116,11 +116,19 @@ func UpdateTaskInCSV(task Task, filename string) error {
 	}
 
 	// Find the task to update
+	found := false
 	for i, t := range tasks {
-		if t.ID == task.ID {
+		if t.ID == taskID {
 			tasks[i].Completed = true // Update the task
+			found = true
 			break
 		}
+	}
+
+	// If the task was not found, return an error
+	if !found {
+		return fmt.Errorf("task with ID %d not found", taskID)
+		return
 	}
 
 	// Open the file for writing (overwrite)

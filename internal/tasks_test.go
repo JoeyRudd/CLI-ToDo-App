@@ -34,7 +34,7 @@ func TestTaskCSVOperations(t *testing.T) {
 	}
 
 	// Update a task
-	if err := UpdateTaskInCSV(task1, filename); err != nil {
+	if err := UpdateTaskInCSV(task1.ID, filename); err != nil {
 		t.Fatalf("UpdateTaskInCSV failed: %v", err)
 	}
 	tasks, err = ReadTasksFromCSV(filename)

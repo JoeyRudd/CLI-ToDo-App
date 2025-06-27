@@ -12,12 +12,8 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "CLI-ToDo-App",
 	Short: "A simple CLI To-Do application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long: `CLI-ToDo-App is a command-line interface application that allows users
+			to manage their to-do tasks efficiently.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
