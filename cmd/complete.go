@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/JoeyRudd/CLI-ToDo-App/internal"
 	"github.com/spf13/cobra"
+	"os"
 	"strconv"
 )
 
@@ -15,14 +16,14 @@ var completeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// check if a task ID is provided
 		if len(args) < 1 {
-			fmt.Println("Please provide a task ID to complete.")
+			fmt.Fprintln(os.Stderr, "Please provide a task ID to complete.")
 			return
 		}
 
 		// convert the first argument to an integer task ID
 		taskID, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Println("Invalid task ID:", args[0])
+			fmt.Fprintln(os.Stderr, "Invalid task ID:", args[0])
 			return
 		}
 
@@ -30,10 +31,10 @@ var completeCmd = &cobra.Command{
 		// Update the task in the CSV file
 		err = internal.UpdateTaskInCSV(taskID, filename)
 		if err != nil {
-			fmt.Println("Error completing task:", err)
+			fmt.Fprintln(os.Stderr, "Error completing task:", err)
 			return
 		}
-		fmt.Printf("Task %s marked as completed.\n", taskID)
+		fmt.Println("Task", taskID, "marked as completed.")
 	},
 }
 

@@ -6,27 +6,20 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Task struct {
 	ID          int
 	Description string
+	Created     time.Time
 	Completed   bool
 }
 
-// CloseFile Helper function to close a file and log an error if it occurs
+// CloseFile Helper function to close a file and log an error if it occurs			fmt.Fprintf(w, "%d\t%s\t%s\t%t\n", task.ID, task.Description, task.Created, task.Completed)
 func CloseFile(file *os.File) {
 	if err := file.Close(); err != nil {
 		log.Printf("error closing file: %v", err)
-	}
-}
-
-// AddTask Create a slice to hold tasks
-func (t Task) AddTask(description string) Task {
-	return Task{
-		ID:          t.ID + 1, // Increment ID for simplicity
-		Description: description,
-		Completed:   false,
 	}
 }
 
@@ -37,7 +30,6 @@ func AppendTaskToCSV(task Task, filename string) error {
 	if err != nil {
 		return err
 	}
-
 	defer CloseFile(file)
 
 	writer := csv.NewWriter(file)
@@ -47,6 +39,7 @@ func AppendTaskToCSV(task Task, filename string) error {
 	record := []string{
 		strconv.Itoa(task.ID),
 		task.Description,
+		task.Created.Format(time.RFC3339),
 		strconv.FormatBool(task.Completed),
 	}
 
@@ -79,17 +72,20 @@ func ReadTasksFromCSV(filename string) ([]Task, error) {
 
 	for _, record := range records {
 		// Check if the record has the expected number of fields
-		if len(record) != 3 {
-			return nil, fmt.Errorf("Malformed record at line %d: %v", len(tasks)+1, record)
+		if len(record) != 4 {
+			return nil, fmt.Errorf("malformed record at line %d: %v", len(tasks)+1, record)
 		}
 		// Convert the ID from string to int
 		id, err := strconv.Atoi(record[0])
 		if err != nil {
-			return nil, fmt.Errorf("Invalid ID in record %v: %v", record, err)
+			return nil, fmt.Errorf("invalid ID in record %v: %v", record, err)
 		}
-
+		created, err := time.Parse(time.RFC3339, record[2])
+		if err != nil {
+			return nil, fmt.Errorf("invalid time in record %v: %v", record, err)
+		}
 		// Convert the Completed status from string to bool
-		completed, err := strconv.ParseBool(record[2])
+		completed, err := strconv.ParseBool(record[3])
 		if err != nil {
 			return nil, err
 		}
@@ -98,6 +94,7 @@ func ReadTasksFromCSV(filename string) ([]Task, error) {
 		task := Task{
 			ID:          id,
 			Description: record[1],
+			Created:     created,
 			Completed:   completed,
 		}
 
@@ -146,6 +143,7 @@ func UpdateTaskInCSV(taskID int, filename string) error {
 		record := []string{
 			strconv.Itoa(t.ID),
 			t.Description,
+			t.Created.Format(time.RFC3339),
 			strconv.FormatBool(t.Completed),
 		}
 		if err := writer.Write(record); err != nil {
@@ -154,4 +152,19 @@ func UpdateTaskInCSV(taskID int, filename string) error {
 	}
 
 	return nil
+}
+
+func FormatTimeAsAgo(created time.Time) string {
+	duration := time.Since(created)
+	if duration.Hours() >= 24 {
+		days := int(duration.Hours() / 24)
+		return fmt.Sprintf("%d days ago", days)
+	} else if duration.Hours() >= 1 {
+		hours := int(duration.Hours())
+		return fmt.Sprintf("%d hours ago", hours)
+	} else if duration.Minutes() >= 1 {
+		minutes := int(duration.Minutes())
+		return fmt.Sprintf("%d minutes ago", minutes)
+	}
+	return "just now"
 }

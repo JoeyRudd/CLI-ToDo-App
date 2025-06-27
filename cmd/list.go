@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/JoeyRudd/CLI-ToDo-App/internal"
 	"github.com/spf13/cobra"
+	"os"
+	"text/tabwriter"
 )
 
 var showAll bool
@@ -18,23 +20,23 @@ var listCmd = &cobra.Command{
 		filename := "tasks.csv"
 		tasks, err := internal.ReadTasksFromCSV(filename)
 		if err != nil {
-			fmt.Println("Error reading tasks:", err)
+			fmt.Fprintln(os.Stderr, "Error reading tasks:", err)
 			return
 		}
 		if len(tasks) == 0 {
-			fmt.Println("No tasks found.")
+			fmt.Fprintln(os.Stderr, "No tasks found.")
 			return
 		}
-		fmt.Println("Tasks:")
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "ID\tDescription\tCreated\tCompleted")
 		for _, task := range tasks {
 			// Check if the task should be shown based on the --all flag
-			if showAll {
-				fmt.Printf("%d: %s (Completed: %t)\n", task.ID, task.Description, task.Completed)
-			} else if !task.Completed {
-				fmt.Printf("%d: %s (Completed: %t)\n", task.ID, task.Description, task.Completed)
+			if showAll || !task.Completed {
+				fmt.Fprintf(w, "%d\t%s\t%s\t%t\n", task.ID, task.Description, internal.FormatTimeAsAgo(task.Created), task.Completed)
 			}
+			w.Flush()
 		}
-		fmt.Println("list called")
 	},
 }
 
