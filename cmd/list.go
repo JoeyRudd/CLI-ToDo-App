@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var showAll bool
+
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -25,13 +27,19 @@ var listCmd = &cobra.Command{
 		}
 		fmt.Println("Tasks:")
 		for _, task := range tasks {
-			fmt.Printf("ID: %d, Description: %s, Completed: %t\n",
-				task.ID, task.Description, task.Completed)
+			// Check if the task should be shown based on the --all flag
+			if showAll {
+				fmt.Printf("%d: %s (Completed: %t)\n", task.ID, task.Description, task.Completed)
+			} else if !task.Completed {
+				fmt.Printf("%d: %s (Completed: %t)\n", task.ID, task.Description, task.Completed)
+			}
 		}
 		fmt.Println("list called")
 	},
 }
 
 func init() {
+	// added a show all command
+	listCmd.Flags().BoolVarP(&showAll, "all", "a", false, "Show all tasks including completed ones")
 	rootCmd.AddCommand(listCmd)
 }

@@ -128,7 +128,6 @@ func UpdateTaskInCSV(taskID int, filename string) error {
 	// If the task was not found, return an error
 	if !found {
 		return fmt.Errorf("task with ID %d not found", taskID)
-		return
 	}
 
 	// Open the file for writing (overwrite)
