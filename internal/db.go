@@ -5,6 +5,8 @@ import (
 	_ "github.com/mattn/go-sqlite3" // Import the SQLite driver
 )
 
+var DB *sql.DB // Exported DB variable
+
 func InitDB(dbPath string) (*sql.DB, error) {
 	// Open the database connection
 	db, err := sql.Open("sqlite3", dbPath)

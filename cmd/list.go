@@ -17,8 +17,7 @@ var listCmd = &cobra.Command{
 	Long: `The list command retrieves and displays all 
 			tasks from the task list.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		filename := "tasks.csv"
-		tasks, err := internal.ReadTasksFromCSV(filename)
+		tasks, err := internal.GetAllTasksFromDB(internal.DB)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading tasks:", err)
 			return

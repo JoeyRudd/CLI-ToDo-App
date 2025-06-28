@@ -27,9 +27,8 @@ var completeCmd = &cobra.Command{
 			return
 		}
 
-		filename := "tasks.csv"
 		// Update the task in the CSV file
-		err = internal.UpdateTaskInCSV(taskID, filename)
+		err = internal.UpdateTaskInDB(internal.DB, taskID)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error completing task:", err)
 			return

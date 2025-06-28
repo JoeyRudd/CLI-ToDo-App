@@ -1,11 +1,11 @@
 package internal
 
 import (
-	"encoding/csv"
+	"database/sql"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3" // Import the SQLite driver
 	"log"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -23,137 +23,58 @@ func CloseFile(file *os.File) {
 	}
 }
 
-// AppendTaskToCSV appends a new task to the CSV file
-func AppendTaskToCSV(task Task, filename string) error {
-	// Open the file for writing
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer CloseFile(file)
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	// Create a record for each task
-	record := []string{
-		strconv.Itoa(task.ID),
-		task.Description,
-		task.Created.Format(time.RFC3339),
-		strconv.FormatBool(task.Completed),
-	}
-
-	// Write the record to the CSV file
-	if err := writer.Write(record); err != nil {
-		return err
-	}
-	return nil
+// AddTaskToDB adds a new task to the database
+func AddTaskToDB(db *sql.DB, task Task) error {
+	_, err := db.Exec("INSERT INTO tasks (description, created_at, completed) VALUES (?, ?, ?)",
+		task.Description, task.Created.Format(time.RFC3339), task.Completed,
+	)
+	return err
 }
 
-// ReadTasksFromCSV reads tasks from a CSV file and returns a slice of Task
-func ReadTasksFromCSV(filename string) ([]Task, error) {
-	// create a slice to hold tasks
+// GetAllTasksFromDB retrieves all tasks from the database
+func GetAllTasksFromDB(db *sql.DB) ([]Task, error) {
+	// Query the database for all tasks
+	rows, err := db.Query("SELECT id, description, created_at, completed FROM tasks")
+	if err != nil {
+		log.Printf("error querying tasks: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Create a slice to hold the tasks
 	var tasks []Task
-
-	// Open the file for reading
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	defer CloseFile(file)
-
-	// Create a CSV reader
-	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, record := range records {
-		// Check if the record has the expected number of fields
-		if len(record) != 4 {
-			return nil, fmt.Errorf("malformed record at line %d: %v", len(tasks)+1, record)
-		}
-		// Convert the ID from string to int
-		id, err := strconv.Atoi(record[0])
-		if err != nil {
-			return nil, fmt.Errorf("invalid ID in record %v: %v", record, err)
-		}
-		created, err := time.Parse(time.RFC3339, record[2])
-		if err != nil {
-			return nil, fmt.Errorf("invalid time in record %v: %v", record, err)
-		}
-		// Convert the Completed status from string to bool
-		completed, err := strconv.ParseBool(record[3])
-		if err != nil {
+	// Iterate over the rows and scan each task into a Task struct
+	for rows.Next() {
+		var task Task
+		var created string
+		if err := rows.Scan(&task.ID, &task.Description, &created, &task.Completed); err != nil {
+			log.Printf("error scanning row: %v", err)
 			return nil, err
 		}
-
-		// Create a Task instance and append it to the slice
-		task := Task{
-			ID:          id,
-			Description: record[1],
-			Created:     created,
-			Completed:   completed,
-		}
-
+		task.Created, _ = time.Parse(time.RFC3339, created)
 		tasks = append(tasks, task)
+	}
+
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		log.Printf("error scanning rows: %v", err)
+		return nil, err
 	}
 
 	return tasks, nil
 }
 
-// UpdateTaskInCSV updates a task in the CSV file by ID
-func UpdateTaskInCSV(taskID int, filename string) error {
-	// Read all tasks from the CSV file
-	tasks, err := ReadTasksFromCSV(filename)
+// UpdateTaskInDB updates a task in the database by ID
+func UpdateTaskInDB(db *sql.DB, taskID int) error {
+	// Update the task in the database
+	_, err := db.Exec("UPDATE tasks SET completed = ? WHERE id = ?", true, taskID)
 	if err != nil {
-		return err
+		fmt.Println("error updating task with ID %d: %v", taskID, err)
 	}
-
-	// Find the task to update
-	found := false
-	for i, t := range tasks {
-		if t.ID == taskID {
-			tasks[i].Completed = true // Update the task
-			found = true
-			break
-		}
-	}
-
-	// If the task was not found, return an error
-	if !found {
-		return fmt.Errorf("task with ID %d not found", taskID)
-	}
-
-	// Open the file for writing (overwrite)
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-
-	defer CloseFile(file)
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	// Write updated tasks back to the CSV file
-	for _, t := range tasks {
-		record := []string{
-			strconv.Itoa(t.ID),
-			t.Description,
-			t.Created.Format(time.RFC3339),
-			strconv.FormatBool(t.Completed),
-		}
-		if err := writer.Write(record); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return err
 }
 
+// FormatTimeAsAgo formats a time.Time value as a human-readable "time ago" string
 func FormatTimeAsAgo(created time.Time) string {
 	duration := time.Since(created)
 	if duration.Hours() >= 24 {
