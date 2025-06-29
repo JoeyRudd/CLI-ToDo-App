@@ -32,10 +32,14 @@ var listCmd = &cobra.Command{
 		for _, task := range tasks {
 			// Check if the task should be shown based on the --all flag
 			if showAll || !task.Completed {
-				fmt.Fprintf(w, "%d\t%s\t%s\t%t\n", task.ID, task.Description, internal.FormatTimeAsAgo(task.Created), task.Completed)
+				completed := "No"
+				if task.Completed {
+					completed = "Yes"
+				}
+				fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", task.ID, task.Description, internal.FormatTimeAsAgo(task.Created), completed)
 			}
-			w.Flush()
 		}
+		w.Flush()
 	},
 }
 
